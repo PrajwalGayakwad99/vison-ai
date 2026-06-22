@@ -1,4 +1,4 @@
-# Invincia Platform
+# Vision-ai- Platform
 
 Modular monorepo — Next.js 15 frontend + FastAPI backend + Docker sandbox.
 

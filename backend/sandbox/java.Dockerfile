@@ -1,5 +1,5 @@
-FROM eclipse-temurin:21-jre-jammy
-LABEL maintainer="Prajwal <dev@invincia.com>"
+FROM eclipse-temurin:21-jdk-jammy
+LABEL maintainer="Prajwal <dev@vision-ai.com>"
 
 WORKDIR /sandbox
 

@@ -24,9 +24,9 @@ interface WorkspaceState {
 }
 
 const defaultCode: Record<Language, string> = {
-  python: 'print("Hello, Invincia!")\n',
-  java: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, Invincia!");\n  }\n}\n',
-  javascript: 'console.log("Hello, Invincia!");\n',
+  python: 'print("Hello, Vision AI!")\n',
+  java: 'public class Main {\n  public static void main(String[] args) {\n    System.out.println("Hello, Vision AI!");\n  }\n}\n',
+  javascript: 'console.log("Hello, Vision AI!");\n',
 };
 
 export const useWorkspace = create<WorkspaceState>((set) => ({
@@ -43,5 +43,5 @@ export const useWorkspace = create<WorkspaceState>((set) => ({
   addTutorMessage: (msg) =>
     set((s) => ({ tutorMessages: [...s.tutorMessages, msg] })),
   reset: () =>
-    set({ code: defaultCode["python"], output: "", tutorMessages: [] }),
+    set({ language: "python", code: defaultCode["python"], output: "", tutorMessages: [] }),
 }));

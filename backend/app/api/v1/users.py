@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from app.models.schemas import UserCreate, UserOut, LeaderboardEntry
 from app.services.db import get_db
+from app.core.security import get_password_hash
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -9,10 +10,10 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def create_user(payload: UserCreate) -> UserOut:
     """Register a new user."""
     db = get_db()
-    # TODO: hash password before storing
     result = db.table("users").insert({
         "username": payload.username,
         "email": payload.email,
+        "password_hash": get_password_hash(payload.password),
     }).execute()
     if not result.data:
         raise HTTPException(status_code=400, detail="Could not create user.")

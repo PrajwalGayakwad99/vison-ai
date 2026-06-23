@@ -4,9 +4,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1 import execute, tutor, users
 
 app = FastAPI(
-    title="Invincia Platform API",
+    title="Vision AI API",
     version="0.1.0",
-    description="FastAPI backend for the Invincia AI coding tutor platform.",
+    description="FastAPI backend for the Vision AI coding tutor platform.",
 )
 
 app.add_middleware(

@@ -1,4 +1,4 @@
-# Vision-ai- Platform
+# Vision AI
 
 Modular monorepo — Next.js 15 frontend + FastAPI backend + Docker sandbox.
 

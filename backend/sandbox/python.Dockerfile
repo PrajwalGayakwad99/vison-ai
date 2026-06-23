@@ -1,5 +1,5 @@
 FROM python:3.11-slim
-LABEL maintainer="Prajwal <dev@invincia.com>"
+LABEL maintainer="Prajwal <dev@vision-ai.com>"
 
 WORKDIR /sandbox
 

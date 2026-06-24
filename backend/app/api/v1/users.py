@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.models.schemas import UserCreate, UserOut, LeaderboardEntry
 from app.services.db import get_db
 from app.core.security import get_password_hash
+from app.api.v1.auth import get_current_user
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -18,6 +19,12 @@ async def create_user(payload: UserCreate) -> UserOut:
     if not result.data:
         raise HTTPException(status_code=400, detail="Could not create user.")
     return UserOut(**result.data[0])
+
+
+@router.get("/me", response_model=UserOut)
+async def get_me(current_user: dict = Depends(get_current_user)) -> UserOut:
+    """Get the currently authenticated user's profile."""
+    return UserOut(**current_user)
 
 
 @router.get("/{user_id}", response_model=UserOut)

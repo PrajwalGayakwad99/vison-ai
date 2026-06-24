@@ -30,3 +30,7 @@ out/
 
 # Docker
 docker-compose.override.yml
+
+# Clerk CLI skills (local tooling, not project code)
+.agents/
+skills-lock.json

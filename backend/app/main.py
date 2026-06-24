@@ -1,7 +1,8 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import execute, tutor, users
+from app.api.v1 import auth, execute, tutor, users
+from app.core.config import settings
 
 app = FastAPI(
     title="Vision AI API",
@@ -9,18 +10,22 @@ app = FastAPI(
     description="FastAPI backend for the Vision AI coding tutor platform.",
 )
 
+# Parse CORS origins from environment (comma-separated for multiple origins)
+cors_origins = [origin.strip() for origin in settings.cors_origins.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # ── REST routers ────────────────────────────────────────────────────────────
-app.include_router(execute.router, prefix="/api/v1")
-app.include_router(tutor.router,   prefix="/api/v1")
-app.include_router(users.router,   prefix="/api/v1")
+app.include_router(auth.router,     prefix="/api/v1")
+app.include_router(execute.router,  prefix="/api/v1")
+app.include_router(tutor.router,    prefix="/api/v1")
+app.include_router(users.router,    prefix="/api/v1")
 
 
 # ── Health check ─────────────────────────────────────────────────────────────

@@ -9,8 +9,10 @@ class Settings(BaseSettings):
     supabase_key: str = ""
     gemini_api_key: str = ""
     secret_key: str = "change-me-in-production"
+    clerk_secret_key: str = ""
     environment: str = "development"
     debug: bool = True
+    cors_origins: str = "http://localhost:3000"
 
 
 settings = Settings()

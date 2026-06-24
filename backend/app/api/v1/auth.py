@@ -1,7 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.config import settings
 from app.core.security import create_access_token, verify_password, verify_token
 from app.models.schemas import Token
 from app.services.db import get_db

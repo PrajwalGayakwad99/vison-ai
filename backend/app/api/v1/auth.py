@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.security import create_access_token, verify_password, verify_token
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 security = HTTPBearer()
 
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = security) -> dict:
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> dict:
     """Validate JWT and return the current user's data."""
     token = credentials.credentials
     payload = verify_token(token)

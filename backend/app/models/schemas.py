@@ -38,6 +38,19 @@ class ExecuteResponse(BaseModel):
     execution_time_ms: int | None = None
 
 
+# ── Sandbox Code Execution ─────────────────────────────────────────────────────
+class CodeExecutionRequest(BaseModel):
+    language: str = Field(default="python", description="Language: python")
+    code: str = Field(..., description="Source code to execute")
+
+
+class CodeExecutionResponse(BaseModel):
+    status: str = Field(..., description="Status: success or error")
+    stdout: str = Field(default="", description="Standard output")
+    stderr: str = Field(default="", description="Standard error or error message")
+    execution_time_ms: int = Field(default=0, description="Execution time in milliseconds")
+
+
 # ── AI Tutor ──────────────────────────────────────────────────────────────────
 class TutorRequest(BaseModel):
     message: str

@@ -13,7 +13,7 @@ export default function AuthControls() {
   if (isSignedIn) {
     return (
       <nav className="auth-controls">
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </nav>
     );
   }

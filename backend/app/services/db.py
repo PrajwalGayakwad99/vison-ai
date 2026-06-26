@@ -9,9 +9,20 @@ def get_db() -> Client:
     """Return a singleton Supabase client."""
     global _client
     if _client is None:
-        if not settings.supabase_url or not settings.supabase_key:
-            raise RuntimeError(
-                "SUPABASE_URL and SUPABASE_KEY must be set in .env"
+        # Validate SUPABASE_URL before attempting connection
+        if not settings.supabase_url:
+            raise ValueError(
+                "SUPABASE_URL is missing or invalid in the .env file. "
+                "It must start with http:// or https://"
+            )
+        if not settings.supabase_url.startswith("http"):
+            raise ValueError(
+                "SUPABASE_URL is missing or invalid in the .env file. "
+                "It must start with http:// or https://"
+            )
+        if not settings.supabase_key:
+            raise ValueError(
+                "SUPABASE_KEY is missing in the .env file."
             )
         _client = create_client(settings.supabase_url, settings.supabase_key)
     return _client

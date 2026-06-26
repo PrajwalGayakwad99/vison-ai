@@ -1,5 +1,5 @@
 -- =============================================================================
--- Vision AI - Database Setup Script (Extended for Phase 5 & 6)
+-- Vision AI - Database Setup Script (Extended for Phase 5, 6 & 7)
 -- =============================================================================
 -- Run this script in your Supabase SQL Editor:
 -- https://supabase.com/dashboard → Your Project → SQL Editor → New Query
@@ -9,9 +9,8 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- =============================================================================
--- USERS TABLE (already exists - adding xp columns)
+-- USERS TABLE
 -- =============================================================================
--- Stores registered user accounts for authentication and gamification
 
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -25,7 +24,6 @@ CREATE TABLE IF NOT EXISTS public.users (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Indexes
 CREATE INDEX IF NOT EXISTS idx_users_email ON public.users(email);
 CREATE INDEX IF NOT EXISTS idx_users_xp ON public.users(xp DESC);
 
@@ -64,10 +62,9 @@ CREATE TABLE IF NOT EXISTS public.tutor_sessions (
 CREATE INDEX IF NOT EXISTS idx_tutor_sessions_user_id ON public.tutor_sessions(user_id);
 
 -- =============================================================================
--- PHASE 5: CURRICULUM SYSTEM
+-- COURSES TABLE
 -- =============================================================================
 
--- COURSES TABLE
 CREATE TABLE IF NOT EXISTS public.courses (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     title TEXT NOT NULL,
@@ -84,7 +81,10 @@ CREATE TABLE IF NOT EXISTS public.courses (
 CREATE INDEX IF NOT EXISTS idx_courses_slug ON public.courses(slug);
 CREATE INDEX IF NOT EXISTS idx_courses_published ON public.courses(is_published);
 
+-- =============================================================================
 -- MODULES TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.modules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     course_id UUID NOT NULL REFERENCES public.courses(id) ON DELETE CASCADE,
@@ -98,7 +98,10 @@ CREATE TABLE IF NOT EXISTS public.modules (
 
 CREATE INDEX IF NOT EXISTS idx_modules_course_id ON public.modules(course_id);
 
+-- =============================================================================
 -- LESSONS TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.lessons (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     module_id UUID NOT NULL REFERENCES public.modules(id) ON DELETE CASCADE,
@@ -113,7 +116,10 @@ CREATE TABLE IF NOT EXISTS public.lessons (
 
 CREATE INDEX IF NOT EXISTS idx_lessons_module_id ON public.lessons(module_id);
 
+-- =============================================================================
 -- TOPICS TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.topics (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     lesson_id UUID NOT NULL REFERENCES public.lessons(id) ON DELETE CASCADE,
@@ -126,7 +132,10 @@ CREATE TABLE IF NOT EXISTS public.topics (
 
 CREATE INDEX IF NOT EXISTS idx_topics_lesson_id ON public.topics(lesson_id);
 
+-- =============================================================================
 -- EXERCISES TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.exercises (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     topic_id UUID NOT NULL REFERENCES public.topics(id) ON DELETE CASCADE,
@@ -146,7 +155,10 @@ CREATE TABLE IF NOT EXISTS public.exercises (
 CREATE INDEX IF NOT EXISTS idx_exercises_topic_id ON public.exercises(topic_id);
 CREATE INDEX IF NOT EXISTS idx_exercises_difficulty ON public.exercises(difficulty);
 
+-- =============================================================================
 -- USER PROGRESS TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.user_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -170,10 +182,9 @@ CREATE INDEX IF NOT EXISTS idx_user_progress_user_id ON public.user_progress(use
 CREATE INDEX IF NOT EXISTS idx_user_progress_course_id ON public.user_progress(course_id);
 
 -- =============================================================================
--- PHASE 6: GAMIFICATION SYSTEM
+-- ACHIEVEMENTS TABLE
 -- =============================================================================
 
--- ACHIEVEMENTS TABLE
 CREATE TABLE IF NOT EXISTS public.achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
@@ -188,7 +199,10 @@ CREATE TABLE IF NOT EXISTS public.achievements (
 
 CREATE INDEX IF NOT EXISTS idx_achievements_category ON public.achievements(category);
 
+-- =============================================================================
 -- USER ACHIEVEMENTS MAPPING TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.user_achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -199,7 +213,10 @@ CREATE TABLE IF NOT EXISTS public.user_achievements (
 
 CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON public.user_achievements(user_id);
 
--- USER STREAKS TABLE (enhanced tracking)
+-- =============================================================================
+-- USER STREAKS TABLE
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.user_streaks (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
@@ -212,7 +229,10 @@ CREATE TABLE IF NOT EXISTS public.user_streaks (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- XP TRANSACTION LOG (audit trail)
+-- =============================================================================
+-- XP TRANSACTION LOG
+-- =============================================================================
+
 CREATE TABLE IF NOT EXISTS public.xp_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -231,57 +251,228 @@ CREATE INDEX IF NOT EXISTS idx_xp_transactions_created_at ON public.xp_transacti
 -- =============================================================================
 
 INSERT INTO public.achievements (name, description, icon, category, xp_bonus, criteria_type, criteria_value) VALUES
-    ('First Steps', 'Complete your first exercise', '🎯', 'milestone', 10, 'exercises_completed', 1),
-    ('Getting Started', 'Complete 10 exercises', '🌟', 'milestone', 50, 'exercises_completed', 10),
-    ('Code Warrior', 'Complete 50 exercises', '⚔️', 'milestone', 200, 'exercises_completed', 50),
-    ('Code Master', 'Complete 100 exercises', '👑', 'milestone', 500, 'exercises_completed', 100),
-    ('Streak Starter', 'Maintain a 3-day streak', '🔥', 'streak', 25, 'streak_days', 3),
-    ('Week Warrior', 'Maintain a 7-day streak', '💪', 'streak', 75, 'streak_days', 7),
-    ('Month Master', 'Maintain a 30-day streak', '🏆', 'streak', 300, 'streak_days', 30),
-    ('Python Novice', 'Earn 100 XP', '🐍', 'xp', 25, 'total_xp', 100),
-    ('Python Adept', 'Earn 500 XP', '🐍', 'xp', 100, 'total_xp', 500),
-    ('Python Expert', 'Earn 1000 XP', '🐍', 'xp', 250, 'total_xp', 1000),
-    ('Python Legend', 'Earn 5000 XP', '🐍', 'xp', 1000, 'total_xp', 5000),
-    ('Course Completer', 'Complete your first course', '📚', 'course', 100, 'courses_completed', 1),
-    ('Learning Machine', 'Complete 5 courses', '🤖', 'course', 300, 'courses_completed', 5),
-    ('Bug Squasher', 'Pass 10 exercises on first try', '🐛', 'special', 75, 'first_try_success', 10),
-    ('Speed Demon', 'Complete an exercise in under 30 seconds', '⚡', 'special', 50, 'speed_exercise', 1)
+    ('First Steps', 'Complete your first exercise', '1f3af', 'milestone', 10, 'exercises_completed', 1),
+    ('Getting Started', 'Complete 10 exercises', '1f31f', 'milestone', 50, 'exercises_completed', 10),
+    ('Code Warrior', 'Complete 50 exercises', '2694', 'milestone', 200, 'exercises_completed', 50),
+    ('Python Novice', 'Earn 100 XP', '1f40d', 'xp', 25, 'total_xp', 100),
+    ('Python Adept', 'Earn 500 XP', '1f40d', 'xp', 100, 'total_xp', 500),
+    ('Python Expert', 'Earn 1000 XP', '1f40d', 'xp', 250, 'total_xp', 1000),
+    ('Streak Starter', 'Maintain a 3-day streak', '1f525', 'streak', 25, 'streak_days', 3),
+    ('Week Warrior', 'Maintain a 7-day streak', '1f4aa', 'streak', 75, 'streak_days', 7),
+    ('Course Completer', 'Complete your first course', '1f4da', 'course', 100, 'courses_completed', 1)
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================================================
--- SEED DATA: SAMPLE CURRICULUM
+-- PHASE 7: ANALYTICS SYSTEM
 -- =============================================================================
 
--- Insert a sample course
-INSERT INTO public.courses (title, description, slug, difficulty, estimated_hours, xp_reward, is_published)
-VALUES (
-    'Python Fundamentals',
-    'Learn the basics of Python programming from scratch.',
-    'python-fundamentals',
-    'beginner',
-    10,
-    500,
-    true
-) ON CONFLICT (slug) DO NOTHING;
+-- USER SKILL METRICS TABLE
+CREATE TABLE IF NOT EXISTS public.user_skill_metrics (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    skill_name TEXT NOT NULL,
+    skill_category TEXT NOT NULL DEFAULT 'general',
+    proficiency_score INTEGER NOT NULL DEFAULT 0 CHECK (proficiency_score >= 0 AND proficiency_score <= 100),
+    total_attempts INTEGER NOT NULL DEFAULT 0,
+    successful_attempts INTEGER NOT NULL DEFAULT 0,
+    last_practiced_at TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, skill_name)
+);
 
--- Insert sample modules
-WITH course AS (
-    SELECT id FROM public.courses WHERE slug = 'python-fundamentals'
-)
-INSERT INTO public.modules (course_id, title, description, order_index, xp_reward)
-SELECT course.id, title, description, order_index, xp_reward
-FROM course
-CROSS JOIN (VALUES
-    ('Getting Started with Python', 'Your first steps into programming', 1, 50),
-    ('Variables and Data Types', 'Understanding how to store and use data', 2, 75),
-    ('Control Flow', 'Making decisions in your code', 3, 100),
-    ('Functions', 'Writing reusable code blocks', 4, 100)
-) AS t(title, description, order_index, xp_reward)
-ON CONFLICT DO NOTHING;
+CREATE INDEX IF NOT EXISTS idx_user_skill_metrics_user_id ON public.user_skill_metrics(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_skill_metrics_skill_category ON public.user_skill_metrics(skill_category);
+
+-- SKILL CATEGORIES SEED DATA
+CREATE TABLE IF NOT EXISTS public.skill_categories (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name TEXT NOT NULL UNIQUE,
+    description TEXT,
+    parent_category TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO public.skill_categories (name, description, parent_category) VALUES
+    ('python_basics', 'Python Basics', NULL),
+    ('variables', 'Variables & Data Types', 'python_basics'),
+    ('control_flow', 'Control Flow', 'python_basics'),
+    ('functions', 'Functions', 'python_basics'),
+    ('data_structures', 'Data Structures', NULL),
+    ('lists', 'Lists & Arrays', 'data_structures'),
+    ('dictionaries', 'Dictionaries & Maps', 'data_structures'),
+    ('algorithms', 'Algorithms', NULL),
+    ('loops', 'Loops & Iteration', 'algorithms'),
+    ('recursion', 'Recursion', 'algorithms'),
+    ('debugging', 'Debugging & Errors', NULL)
+ON CONFLICT (name) DO NOTHING;
+
+-- DAILY ACTIVITY HEATMAP TABLE
+CREATE TABLE IF NOT EXISTS public.daily_activity_heatmap (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    activity_date DATE NOT NULL,
+    executions_count INTEGER NOT NULL DEFAULT 0,
+    tutor_sessions_count INTEGER NOT NULL DEFAULT 0,
+    xp_earned INTEGER NOT NULL DEFAULT 0,
+    exercises_completed INTEGER NOT NULL DEFAULT 0,
+    minutes_active INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, activity_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_activity_user_id ON public.daily_activity_heatmap(user_id);
+CREATE INDEX IF NOT EXISTS idx_daily_activity_date ON public.daily_activity_heatmap(activity_date DESC);
+
+-- USER ERROR LOG TABLE
+CREATE TABLE IF NOT EXISTS public.user_error_logs (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    error_type TEXT NOT NULL,
+    error_message TEXT,
+    language TEXT,
+    frequency INTEGER NOT NULL DEFAULT 1,
+    last_occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, error_type, language)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_error_logs_user_id ON public.user_error_logs(user_id);
 
 -- =============================================================================
--- ROW LEVEL SECURITY (RLS) - DISABLED
+-- SQL FUNCTIONS FOR ANALYTICS
 -- =============================================================================
+
+-- Function to get user's activity heatmap for the last N days
+CREATE OR REPLACE FUNCTION get_user_heatmap(p_user_id UUID, p_days INTEGER DEFAULT 365)
+RETURNS TABLE (
+    activity_date DATE,
+    executions_count BIGINT,
+    tutor_sessions_count BIGINT,
+    xp_earned BIGINT,
+    exercises_completed BIGINT,
+    minutes_active BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        d.activity_date,
+        COALESCE(d.executions_count, 0)::BIGINT,
+        COALESCE(d.tutor_sessions_count, 0)::BIGINT,
+        COALESCE(d.xp_earned, 0)::BIGINT,
+        COALESCE(d.exercises_completed, 0)::BIGINT,
+        COALESCE(d.minutes_active, 0)::BIGINT
+    FROM (
+        SELECT generate_series(
+            CURRENT_DATE - (p_days - 1)::INTEGER,
+            CURRENT_DATE,
+            '1 day'::INTERVAL
+        )::DATE AS activity_date
+    ) dates
+    LEFT JOIN daily_activity_heatmap d ON d.activity_date = dates.activity_date AND d.user_id = p_user_id
+    ORDER BY dates.activity_date;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to calculate skill proficiency
+CREATE OR REPLACE FUNCTION calculate_skill_proficiency(p_user_id UUID, p_skill_name TEXT)
+RETURNS INTEGER AS $$
+DECLARE
+    total INTEGER;
+    successful INTEGER;
+    proficiency INTEGER;
+BEGIN
+    SELECT COUNT(*)::INTEGER, COUNT(*) FILTER (WHERE status = 'success')::INTEGER
+    INTO total, successful
+    FROM execution_logs
+    WHERE user_id = p_user_id
+    AND LOWER(code) LIKE '%' || LOWER(p_skill_name) || '%';
+
+    IF total = 0 THEN RETURN 0; END IF;
+
+    proficiency := (successful::FLOAT / total * 100)::INTEGER;
+    proficiency := proficiency + LEAST(total / 10, 20);
+    RETURN GREATEST(0, LEAST(100, proficiency));
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get weekly activity pattern
+CREATE OR REPLACE FUNCTION get_weekly_pattern(p_user_id UUID)
+RETURNS TABLE (
+    day_of_week INTEGER,
+    day_name TEXT,
+    avg_executions DECIMAL,
+    avg_xp DECIMAL,
+    total_sessions BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        EXTRACT(DOW FROM activity_date)::INTEGER as day_of_week,
+        TO_CHAR(activity_date, 'Day') as day_name,
+        AVG(executions_count)::DECIMAL(10,2),
+        AVG(xp_earned)::DECIMAL(10,2),
+        SUM(tutor_sessions_count)::BIGINT
+    FROM daily_activity_heatmap
+    WHERE user_id = p_user_id
+    AND activity_date >= CURRENT_DATE - INTERVAL '90 days'
+    GROUP BY EXTRACT(DOW FROM activity_date), TO_CHAR(activity_date, 'Day')
+    ORDER BY day_of_week;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get top errors
+CREATE OR REPLACE FUNCTION get_top_errors(p_user_id UUID, p_limit INTEGER DEFAULT 10)
+RETURNS TABLE (
+    error_type TEXT,
+    frequency BIGINT,
+    last_occurred_at TIMESTAMPTZ
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT e.error_type, e.frequency, e.last_occurred_at
+    FROM user_error_logs e
+    WHERE e.user_id = p_user_id
+    ORDER BY e.frequency DESC
+    LIMIT p_limit;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to update daily activity
+CREATE OR REPLACE FUNCTION update_daily_activity(p_user_id UUID, p_activity_type TEXT)
+RETURNS VOID AS $$
+DECLARE
+    today_date DATE := CURRENT_DATE;
+    current_record RECORD;
+BEGIN
+    SELECT * INTO current_record
+    FROM daily_activity_heatmap
+    WHERE user_id = p_user_id AND activity_date = today_date;
+
+    IF current_record.id IS NULL THEN
+        INSERT INTO daily_activity_heatmap (user_id, activity_date, executions_count, tutor_sessions_count, xp_earned, exercises_completed, minutes_active)
+        VALUES (
+            p_user_id, today_date,
+            CASE WHEN p_activity_type = 'execution' THEN 1 ELSE 0 END,
+            CASE WHEN p_activity_type = 'tutor' THEN 1 ELSE 0 END,
+            0, 0, 0
+        );
+    ELSE
+        UPDATE daily_activity_heatmap SET
+            executions_count = executions_count + CASE WHEN p_activity_type = 'execution' THEN 1 ELSE 0 END,
+            tutor_sessions_count = tutor_sessions_count + CASE WHEN p_activity_type = 'tutor' THEN 1 ELSE 0 END,
+            updated_at = NOW()
+        WHERE id = current_record.id;
+    END IF;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =============================================================================
+-- DISABLE RLS ON ALL TABLES
+-- =============================================================================
+
 ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.execution_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.tutor_sessions DISABLE ROW LEVEL SECURITY;
@@ -295,3 +486,7 @@ ALTER TABLE public.achievements DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_achievements DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_streaks DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.xp_transactions DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_skill_metrics DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.skill_categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.daily_activity_heatmap DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_error_logs DISABLE ROW LEVEL SECURITY;

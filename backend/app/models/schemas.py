@@ -55,3 +55,15 @@ class LeaderboardEntry(BaseModel):
     rank: int
     username: str
     xp: int
+
+
+# ── Visual Code Tracker ───────────────────────────────────────────────────────
+class VisualizeRequest(BaseModel):
+    language: str = Field(default="python", description="Language: python, java, javascript")
+    code: str = Field(..., description="Source code to visualize")
+
+
+class VisualizeResponse(BaseModel):
+    status: str = Field(default="ok", description="Status: ok, error, syntax_error")
+    timeline: list[dict] = Field(default_factory=list, description="Execution timeline")
+    total_steps: int = Field(default=0, description="Total execution steps captured")

@@ -38,21 +38,33 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = security) -> di
 @router.post("/login", response_model=Token)
 async def login(email: str, password: str) -> Token:
     """Authenticate user and return a JWT access token."""
-    db = get_db()
-    result = db.table("users").select("*").eq("email", email).single().execute()
+    try:
+        db = get_db()
+        result = db.table("users").select("*").eq("email", email).single().execute()
 
-    if not result.data:
+        if not result.data:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
+
+        user = result.data
+
+        if not verify_password(password, user["password_hash"]):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect email or password",
+            )
+
+        access_token = create_access_token(subject=str(user["id"]))
+        return Token(access_token=access_token)
+
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+    except Exception:
+        # Catch Supabase connection errors and return clean 401
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
+            detail="Incorrect email or password",
         )
-
-    user = result.data
-    if not verify_password(password, user["password_hash"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid email or password",
-        )
-
-    access_token = create_access_token(subject=str(user["id"]))
-    return Token(access_token=access_token)

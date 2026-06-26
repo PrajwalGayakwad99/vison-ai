@@ -403,3 +403,99 @@ CourseWithModules.model_rebuild()
 ModuleWithLessons.model_rebuild()
 LessonWithTopics.model_rebuild()
 TopicWithExercises.model_rebuild()
+
+
+# =============================================================================
+# PHASE 7: ANALYTICS SYSTEM SCHEMAS
+# =============================================================================
+
+# ── Heatmap ──────────────────────────────────────────────────────────────────
+class HeatmapEntry(BaseModel):
+    date: date
+    count: int = Field(..., description="Activity count for the day")
+    level: int = Field(..., ge=0, le=4, description="Intensity level 0-4")
+
+
+class HeatmapResponse(BaseModel):
+    user_id: str
+    days: int = Field(default=365, description="Number of days in heatmap")
+    entries: list[HeatmapEntry]
+    total_contributions: int
+    longest_streak: int
+    current_streak: int
+
+
+# ── Skill Radar ────────────────────────────────────────────────────────────────
+class SkillData(BaseModel):
+    skill_name: str
+    category: str
+    proficiency: int = Field(..., ge=0, le=100)
+    total_attempts: int
+    successful_attempts: int
+    last_practiced: datetime | None = None
+
+
+class SkillRadarResponse(BaseModel):
+    user_id: str
+    skills: list[SkillData]
+    overall_score: float = Field(..., ge=0, le=100)
+    strongest_skill: str | None = None
+    weakest_skill: str | None = None
+
+
+# ── Learning Stats ───────────────────────────────────────────────────────────
+class WeeklyPatternEntry(BaseModel):
+    day_of_week: int = Field(..., ge=0, le=6)
+    day_name: str
+    avg_executions: float
+    avg_xp: float
+    total_sessions: int
+
+
+class ErrorEntry(BaseModel):
+    error_type: str
+    frequency: int
+    last_occurred: datetime | None = None
+
+
+class LearningStatsResponse(BaseModel):
+    user_id: str
+    total_executions: int
+    successful_executions: int
+    success_rate: float = Field(..., ge=0, le=100)
+    total_tutor_sessions: int
+    total_xp_earned: int
+    hours_coded: float = Field(..., ge=0)
+    avg_session_length_minutes: float
+    most_active_day: str | None
+    weekly_pattern: list[WeeklyPatternEntry]
+    top_errors: list[ErrorEntry]
+    strongest_topics: list[str]
+    areas_for_improvement: list[str]
+
+
+# ── General Analytics ─────────────────────────────────────────────────────────
+class UserActivitySummary(BaseModel):
+    user_id: str
+    period_start: date
+    period_end: date
+    total_days_active: int
+    total_executions: int
+    total_xp: int
+    exercises_completed: int
+    tutor_sessions: int
+
+
+class ProgressOverTime(BaseModel):
+    date: date
+    cumulative_xp: int
+    cumulative_exercises: int
+    cumulative_hours: float
+
+
+class AnalyticsDashboard(BaseModel):
+    heatmap: HeatmapResponse
+    skill_radar: SkillRadarResponse
+    learning_stats: LearningStatsResponse
+    recent_activity: list[UserActivitySummary]
+    progress_trend: list[ProgressOverTime]

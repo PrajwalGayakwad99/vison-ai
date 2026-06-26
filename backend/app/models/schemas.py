@@ -58,9 +58,30 @@ class TutorRequest(BaseModel):
     language: str | None = None
 
 
+class TutorChatRequest(BaseModel):
+    """Request for general AI tutor chat."""
+    user_message: str = Field(..., description="User's question or message")
+    code_context: str | None = Field(None, description="Current code in editor")
+    language: str = Field(default="python", description="Programming language")
+
+
+class TutorDebugRequest(BaseModel):
+    """Request for AI-powered code debugging."""
+    code: str = Field(..., description="Code with the bug")
+    error_message: str = Field(..., description="Error message from execution")
+
+
+class TutorHintRequest(BaseModel):
+    """Request for a hint (lightweight)."""
+    code: str = Field(..., description="Code where user is stuck")
+    language: str = Field(default="python", description="Programming language")
+
+
 class TutorResponse(BaseModel):
-    reply: str
-    status: str = "ok"
+    """Response from AI tutor."""
+    reply: str = Field(..., description="AI's response")
+    suggested_fix: str | None = Field(None, description="Suggested code fix if applicable")
+    status: str = Field(default="ok", description="Status: ok or error")
 
 
 # ── Leaderboard ───────────────────────────────────────────────────────────────

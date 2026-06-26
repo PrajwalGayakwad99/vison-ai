@@ -1,7 +1,7 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, execute, tutor, users
+from app.api.v1 import auth, curriculum, execute, gamification, tutor, users
 from app.core.config import settings
 
 app = FastAPI(
@@ -22,10 +22,12 @@ app.add_middleware(
 )
 
 # ── REST routers ────────────────────────────────────────────────────────────
-app.include_router(auth.router,     prefix="/api/v1")
-app.include_router(execute.router,  prefix="/api/v1")
-app.include_router(tutor.router,    prefix="/api/v1")
-app.include_router(users.router,    prefix="/api/v1")
+app.include_router(auth.router,       prefix="/api/v1")
+app.include_router(curriculum.router,  prefix="/api/v1")
+app.include_router(execute.router,    prefix="/api/v1")
+app.include_router(gamification.router, prefix="/api/v1")
+app.include_router(tutor.router,      prefix="/api/v1")
+app.include_router(users.router,      prefix="/api/v1")
 
 
 # ── Health check ─────────────────────────────────────────────────────────────

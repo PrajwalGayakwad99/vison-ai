@@ -1,32 +1,22 @@
-import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
-import AuthControls from "../components/shared/AuthControls";
-import "./globals.css";
+import type { Metadata } from 'next';
+// TODO: Re-enable Clerk after setting up a real Clerk app
+// import { ClerkProvider } from '@clerk/nextjs';
+import './globals.css';
+import { SettingsInitializer } from '@/components/shared/SettingsInitializer';
 
 export const metadata: Metadata = {
-  title: "Vision AI",
-  description: "AI-powered visual workspace",
+  title: 'AXIOM — AI Visual Learning',
+  description: 'AI-powered visual learning platform for Data Structures & Algorithms',
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body>
-          <header className="vision-ai-header">
-            <div className="header-inner">
-              <span className="logo">Vision AI</span>
-              <AuthControls />
-            </div>
-          </header>
-          <main>{children}</main>
-        </body>
-      </html>
-    </ClerkProvider>
+    // TODO: Wrap with <ClerkProvider> when auth is set up
+    <html lang="en" suppressHydrationWarning>
+      <body className="antialiased" style={{ background: '#14131A' }}>
+        <SettingsInitializer />
+        {children}
+      </body>
+    </html>
   );
 }
-

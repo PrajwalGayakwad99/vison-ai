@@ -1,22 +1,9 @@
-import { io, Socket } from "socket.io-client";
+import { io } from 'socket.io-client';
 
-let socket: Socket | null = null;
+// Stub socket connection for category 4 features (Collaboration & Social Learning)
+const SOCKET_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3000';
 
-/**
- * Returns a singleton Socket.io client connected to the backend.
- * Call this once in your root layout or workspace page.
- */
-export function getSocket(): Socket {
-  if (!socket) {
-    socket = io(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000", {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
-  }
-  return socket;
-}
-
-export function disconnectSocket(): void {
-  socket?.disconnect();
-  socket = null;
-}
+export const socket = io(SOCKET_URL, {
+  autoConnect: false,
+  reconnectionAttempts: 3,
+});

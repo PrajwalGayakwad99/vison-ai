@@ -490,3 +490,106 @@ ALTER TABLE public.user_skill_metrics DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.skill_categories DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.daily_activity_heatmap DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_error_logs DISABLE ROW LEVEL SECURITY;
+
+-- =============================================================================
+-- PHASE 10: STUDENT IDENTITY & CAREER DEVELOPMENT
+-- =============================================================================
+
+-- 1. Add role column as TEXT first
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS role TEXT;
+
+-- 2. Create ENUM type safely
+DO $$ BEGIN
+    CREATE TYPE user_role AS ENUM ('student', 'recruiter', 'admin');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- 3. Cast column to ENUM
+ALTER TABLE public.users ALTER COLUMN role TYPE user_role USING role::user_role;
+
+-- 4. Set default
+ALTER TABLE public.users ALTER COLUMN role SET DEFAULT 'student'::user_role;
+
+-- 5. Ensure NOT NULL
+UPDATE public.users SET role = 'student' WHERE role IS NULL;
+ALTER TABLE public.users ALTER COLUMN role SET NOT NULL;
+
+-- PORTFOLIOS TABLE
+CREATE TABLE IF NOT EXISTS public.portfolios (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
+    bio TEXT,
+    personal_website TEXT,
+    linkedin_url TEXT,
+    twitter_handle TEXT,
+    is_public BOOLEAN NOT NULL DEFAULT true,
+    github_username TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_portfolios_user_id ON public.portfolios(user_id);
+CREATE INDEX IF NOT EXISTS idx_portfolios_is_public ON public.portfolios(is_public);
+
+-- GITHUB REPOS TABLE
+CREATE TABLE IF NOT EXISTS public.github_repos (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+    repo_name TEXT NOT NULL,
+    description TEXT,
+    url TEXT NOT NULL,
+    language TEXT,
+    stars INTEGER NOT NULL DEFAULT 0,
+    forks INTEGER DEFAULT 0,
+    last_synced_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE(user_id, repo_name)
+);
+
+CREATE INDEX IF NOT EXISTS idx_github_repos_user_id ON public.github_repos(user_id);
+CREATE INDEX IF NOT EXISTS idx_github_repos_stars ON public.github_repos(user_id, stars DESC);
+
+-- SKILL ASSESSMENTS TABLE
+CREATE TABLE IF NOT EXISTS public.skill_assessments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL UNIQUE REFERENCES public.users(id) ON DELETE CASCADE,
+    ai_generated_profile TEXT,
+    recommended_job_roles JSONB DEFAULT '[]'::jsonb,
+    skill_breakdown JSONB DEFAULT '{}'::jsonb,
+    total_xp_analyzed INTEGER DEFAULT 0,
+    modules_completed INTEGER DEFAULT 0,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_skill_assessments_user_id ON public.skill_assessments(user_id);
+CREATE INDEX IF NOT EXISTS idx_skill_assessments_generated_at ON public.skill_assessments(generated_at DESC);
+
+-- Disable RLS on new tables
+ALTER TABLE public.portfolios DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.github_repos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.skill_assessments DISABLE ROW LEVEL SECURITY;
+
+-- Add RLS back for recruiter access control (handled in API)
+ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can read their own portfolio
+CREATE POLICY "Users can read own portfolio" ON public.portfolios
+    FOR SELECT USING (auth.uid() = user_id);
+
+-- Policy: Anyone can read public portfolios (for recruiter search)
+CREATE POLICY "Anyone can read public portfolios" ON public.portfolios
+    FOR SELECT USING (is_public = true);
+
+-- Policy: Users can update their own portfolio
+CREATE POLICY "Users can update own portfolio" ON public.portfolios
+    FOR UPDATE USING (auth.uid() = user_id);
+
+-- Policy: Recruiters can read public portfolios
+-- Note: This is a simplified policy; in production, you'd check role claims
+CREATE POLICY "Recruiters can read public portfolios" ON public.portfolios
+    FOR SELECT USING (
+        is_public = true 
+        OR EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role IN ('recruiter', 'admin'))
+    );

@@ -499,3 +499,117 @@ class AnalyticsDashboard(BaseModel):
     learning_stats: LearningStatsResponse
     recent_activity: list[UserActivitySummary]
     progress_trend: list[ProgressOverTime]
+
+
+# =============================================================================
+# PHASE 10: CAREER DEVELOPMENT SCHEMAS
+# =============================================================================
+
+# ── Portfolio ────────────────────────────────────────────────────────────────
+class PortfolioCreate(BaseModel):
+    bio: Optional[str] = None
+    personal_website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    twitter_handle: Optional[str] = None
+    is_public: bool = True
+    github_username: Optional[str] = None
+
+
+class PortfolioUpdate(BaseModel):
+    bio: Optional[str] = None
+    personal_website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    twitter_handle: Optional[str] = None
+    is_public: Optional[bool] = None
+    github_username: Optional[str] = None
+
+
+class PortfolioOut(BaseModel):
+    id: str
+    user_id: str
+    bio: Optional[str] = None
+    personal_website: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    twitter_handle: Optional[str] = None
+    is_public: bool
+    github_username: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class PortfolioWithUser(PortfolioOut):
+    username: str = ""
+    xp: int = 0
+
+
+# ── GitHub Repos ──────────────────────────────────────────────────────────────
+class GithubRepoCreate(BaseModel):
+    repo_name: str = Field(..., min_length=1)
+    description: Optional[str] = None
+    url: str = Field(...)
+    language: Optional[str] = None
+    stars: int = 0
+    forks: int = 0
+
+
+class GithubRepoOut(BaseModel):
+    id: str
+    user_id: str
+    repo_name: str
+    description: Optional[str] = None
+    url: str
+    language: Optional[str] = None
+    stars: int
+    forks: int
+    last_synced_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class GithubSyncResponse(BaseModel):
+    success: bool
+    repos_synced: int
+    message: str
+
+
+# ── Skill Assessment ────────────────────────────────────────────────────────
+class SkillAssessmentOut(BaseModel):
+    id: str
+    user_id: str
+    ai_generated_profile: Optional[str] = None
+    recommended_job_roles: list[dict] = []
+    skill_breakdown: dict = {}
+    total_xp_analyzed: int
+    modules_completed: int
+    generated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SkillAssessmentResponse(BaseModel):
+    success: bool
+    assessment: Optional[SkillAssessmentOut] = None
+    message: str
+
+
+class CareerProfileRequest(BaseModel):
+    github_username: Optional[str] = None
+    include_repos: bool = True
+
+
+# ── Recruiter Search ────────────────────────────────────────────────────────
+class RecruiterSearchResult(BaseModel):
+    user_id: str
+    username: str
+    bio: Optional[str] = None
+    linkedin_url: Optional[str] = None
+    xp: int
+    top_skills: list[str] = []
+    latest_assessment: Optional[SkillAssessmentOut] = None
+
+
+class RecruiterSearchResponse(BaseModel):
+    results: list[RecruiterSearchResult]
+    total_count: int

@@ -90,7 +90,7 @@ Be encouraging - bugs are learning opportunities!"""
 def _get_llm():
     """Get configured Gemini LLM instance."""
     return ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model="gemini-1.5-flash",
         google_api_key=settings.gemini_api_key,
         temperature=0.7,
     )

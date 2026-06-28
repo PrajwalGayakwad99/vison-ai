@@ -37,7 +37,7 @@ def get_gemini_model() -> genai.GenerativeModel:
     """Get or create the Gemini model instance."""
     global _model
     if _model is None:
-        _model = genai.GenerativeModel("gemini-2.0-flash")
+        _model = genai.GenerativeModel("gemini-1.5-flash")
     return _model
 
 
